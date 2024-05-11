@@ -1,30 +1,88 @@
----
-cluster:
-  - "kubernetes"
-  - "kubernetes-test"
-  - "kubernetes-dev"
+# **MUST** set cluster id here that matches cluster configuration file located
+# under /etc/ood/config/clusters.d/*.yml
+# @example Use the Owens cluster at Ohio Supercomputer Center
+#     cluster: "owens"
+cluster: "k8s-cluster"
 
-form:
-  - account
-  - cpu
-  - memory
-  - wall_time
-
+# Define attribute values that aren't meant to be modified by the user within
+# the Dashboard form
 attributes:
-  cpu:
-    widget: number_field
-    min: 1
-    max: 5
-    label: "CPUs"
+  num_cpus:
+    widget: "number_field"
+    label: "Number of CPU Cores"
     required: true
+    help: "Number of cpu cores available for Jupyter instance"
+    min: 1
+    max: 26
+    step: 1
   memory:
-    widget: number_field
-    min: 1
-    max: 12
-    label: "Memory (GB)"
+    widget: "number_field"
+    label: "Total Memory to allocate"
     required: true
-  wall_time:
-    widget: number_field
-    label: "Hours"
+    help: "Total memory for Jupyter instance in megabytes"
     min: 1
-    value: 1
+    max: 100000
+    step: 1
+  num_gpus:
+    widget: "number_field"
+    label: "Number of GPUs"
+    required: true
+    help: "Number of GPUs requested"
+    min: 1
+    max: 8
+    step: 1
+  # gpu_type:
+  #   widget: "select"
+  #   label: "GPU Type"
+  #   required: true
+  #   help: "Make and model of GPU(s) to request"
+  #   options:
+  #     - ["Any", "any"]
+  #     - ["NVIDIA A100", "a100"]
+  #     - ["NVIDIA H100", "h100"]
+  # use_jupyter_lab:
+  #   widget: check_box
+  #   checked_value: 1
+  #   unchecked_value: 0
+  #   label: "Use JupyterLab instead of Jupyter Notebook?"
+  #   help: |
+  #     JupyterLab is the next generation of Jupyter, and is completely compatible with existing Jupyter Notebooks. Note this requires JupyterLab to be installed.
+  # Set the corresponding modules that need to be loaded for Jupyter to run
+  #
+  # @note It is called within the batch job as `module load <modules>` if
+  #   defined
+  # @example Do not load any modules
+  #     modules: ""
+  # @example Using default python module
+  #     modules: "python"
+  # @example Using specific python module
+  #     modules: "python/3.5"
+  # @example Using combination of modules
+  #     modules: "python/3.5 cuda/8.0.44"
+  modules: "python"
+
+  # Any extra command line arguments to feed to the `jupyter notebook ...`
+  # command that launches the Jupyter notebook within the batch job
+  extra_jupyter_args: ""
+
+# All of the attributes that make up the Dashboard form (in respective order),
+# and made available to the submit configuration file and the template ERB
+# files
+#
+# @note You typically do not need to modify this unless you want to add a new
+#   configurable value
+# @note If an attribute listed below is hard-coded above in the `attributes`
+#   option, then it will not appear in the form page that the user sees in the
+#   Dashboard
+form:
+  - modules
+  - extra_jupyter_args
+  # - use_jupyter_lab
+  - bc_num_hours
+  - num_cpus
+  - memory
+  - num_gpus
+  # - gpu_type
+  - bc_email_on_started
+
+
