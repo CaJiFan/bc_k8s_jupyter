@@ -1,32 +1,44 @@
 <%
-   pwd_cfg = "c.NotebookApp.password=u\'sha1:${SALT}:${PASSWORD_SHA1}\'"
-   host_port_cfg = "c.NotebookApp.base_url=\'/node/${HOST_CFG}/${PORT_CFG}/\'"
+   pwd_cfg = "c.ServerApp.password=u\'sha1:${SALT}:${PASSWORD_SHA1}\'"
+   host_port_cfg = "c.ServerApp.base_url=\'/node/${HOST_CFG}/${PORT_CFG}/\'"
 
    configmap_filename = "ondemand_config.py"
-   configmap_data = "c.NotebookApp.port = 8080"
-   utility_img = "docker-registry.osc.edu/ondemand/ood-k8s-utils:v1.0.0"
+   configmap_data = "c.ServerApp.port = 8080"
+   utility_img = "harbor.ai-dev.i.telconet.net/telconet/telcoai/ood-k8s-utils@sha256:d32b80389ac3255adb26d57965cf6aa9cb10a072ded42b26f7d3ddcb50b64c97"
 
    user = OodSupport::User.new
+   print(user)
 %>
 ---
 script:
-  accounting_id: "<%= account %>"
-  wall_time: "<%= wall_time.to_i * 3600 %>"
+  wall_time: "<%= bc_num_hours.to_i * 60 %>"
   native:
+    nodeSelector:
+      kubernetes.io/hostname: dgxh004dg
     container:
       name: "jupyter"
-      image: "docker-registry.osc.edu/ondemand/scipy-notebook:python-3.9.2"
-      command: "/usr/local/bin/start.sh /opt/conda/bin/jupyter notebook --config=/ood/ondemand_config.py"
-      working_dir: "<%= Etc.getpwnam(ENV['USER']).dir %>"
+      image: "harbor.ai-dev.i.telconet.net/telconet/telcoai/scipy-notebook@sha256:a362bb726a261f561fb4fcf136fae2218a80fe674a52a3d7f3bb2eb530c8535a"
+      command: "/usr/local/bin/start.sh /opt/conda/bin/jupyter lab --config=/tmp/ondemand_config.py"
+      working_dir: /home/jovyan
       restart_policy: 'OnFailure'
       env:
-        NB_UID: "<%= user.uid %>"
-        NB_USER: "<%= user.name %>"
-        NB_GID: "<%= user.group.id %>"
-        HOME: "<%= user.home %>"
+        NB_UID: "1000"
+        NB_USER: "jovyan"
+        NB_GID: "1000"
+        HOME: "/home/jovyan"
       port: "8080"
-      cpu: "<%= cpu %>"
+      cpu: "<%= num_cpus %>"
       memory: "<%= memory %>Gi"
+    configmap:
+      files:
+        - filename: "<%= configmap_filename %>"
+          data: |
+            c.ServerApp.port = 8080
+            c.ServerApp.ip = '0.0.0.0'
+            c.ServerApp.disable_check_xsrf = True
+            c.ServerApp.allow_origin = '*'
+            c.Application.log_level = 'DEBUG'
+          mount_path: '/tmp'
     configmap:
       files:
         - filename: "<%= configmap_filename %>"
