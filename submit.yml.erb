@@ -39,37 +39,3 @@ script:
             c.ServerApp.allow_origin = '*'
             c.Application.log_level = 'DEBUG'
           mount_path: '/tmp'
-    configmap:
-      files:
-        - filename: "<%= configmap_filename %>"
-          data: |
-            c.NotebookApp.port = 8080
-            c.NotebookApp.ip = '0.0.0.0'
-            c.NotebookApp.disable_check_xsrf = True
-            c.NotebookApp.allow_origin = '*'
-            c.Application.log_level = 'DEBUG'
-          mount_path: '/ood'
-    mounts:
-      - type: host
-        name: home
-        host_type: Directory
-        path: <%= user.home %>
-        destination_path: <%= user.home %>
-    init_containers:
-    - name: "init-secret"
-      image: "<%= utility_img %>"
-      command: 
-      - "/bin/save_passwd_as_secret"
-      - "user-<%= user.name %>"
-    - name: "add-passwd-to-cfg"
-      image: "<%= utility_img %>"
-      command:
-      - "/bin/bash"
-      - "-c"
-      - "source /bin/passwd_from_secret; source /bin/create_salt_and_sha1; /bin/add_line_to_configmap \\\"<%= pwd_cfg %>\\\" <%= configmap_filename %>"
-    - name: "add-hostport-to-cfg"
-      image: "<%= utility_img %>"
-      command:
-      - "/bin/bash"
-      - "-c"
-      - "source /bin/find_host_port; /bin/add_line_to_configmap \\\"<%= host_port_cfg %>\\\" <%= configmap_filename %>"
